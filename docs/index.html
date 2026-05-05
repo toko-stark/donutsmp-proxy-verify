@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DonutSMP · Proxy Verify</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="card">
+      <div class="card-header">
+        <div class="badge">donutsmp</div>
+        <h1>proxy<span>verify</span></h1>
+        <p class="subtitle">
+          Route your verification link through your proxy — matching your
+          in-game IP.
+        </p>
+      </div>
+
+      <div class="card-body">
+        <div class="field">
+          <label for="code">Verification Code <span class="req">*</span></label>
+          <input
+            type="text"
+            id="code"
+            placeholder="Paste your code here"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="section-divider">
+          <span class="section-line"></span>
+          <span class="section-label">Proxy Settings</span>
+          <span class="section-line"></span>
+        </div>
+
+        <div class="row row-3">
+          <div class="field">
+            <label for="host">Host <span class="req">*</span></label>
+            <input
+              type="text"
+              id="host"
+              placeholder="proxy.example.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="field">
+            <label for="port">Port <span class="req">*</span></label>
+            <input type="number" id="port" value="1080" min="1" max="65535" />
+          </div>
+          <div class="field">
+            <label for="protocol">Protocol</label>
+            <select id="protocol">
+              <option value="socks5" selected>socks5</option>
+              <option value="socks4">socks4</option>
+              <option value="http">http</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row row-2">
+          <div class="field">
+            <label for="username"
+              >Username <span class="opt">optional</span></label
+            >
+            <input
+              type="text"
+              id="username"
+              placeholder="Optional"
+              autocomplete="off"
+            />
+          </div>
+          <div class="field">
+            <label for="password"
+              >Password <span class="opt">optional</span></label
+            >
+            <input
+              type="password"
+              id="password"
+              placeholder="Optional"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button class="submit-btn" id="submitBtn">Verify Now</button>
+        <p class="coldstart-note">
+          First request may take ~30 seconds if the server is waking up.
+        </p>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = 'https://donutsmp-proxy-verify.onrender.com';
+
+      const submitBtn = document.getElementById('submitBtn');
+      const resultEl = document.getElementById('result');
+
+      function setLoading(loading) {
+        submitBtn.disabled = loading;
+        if (loading) {
+          submitBtn.innerHTML = '<span class="dots">Verifying</span>';
+        } else {
+          submitBtn.textContent = 'Verify Now';
+        }
+        document
+          .querySelectorAll('input, select')
+          .forEach((el) => (el.disabled = loading));
+      }
+
+      function showResult(type, message) {
+        resultEl.className = `result ${type}`;
+        resultEl.textContent = message;
+      }
+
+      submitBtn.addEventListener('click', async () => {
+        resultEl.className = 'result';
+        resultEl.textContent = '';
+
+        const code = document.getElementById('code').value.trim();
+        const host = document.getElementById('host').value.trim();
+        const port = parseInt(document.getElementById('port').value, 10);
+        const protocol = document.getElementById('protocol').value;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!code) return showResult('error', 'Verification code is required.');
+        if (!host) return showResult('error', 'Proxy host is required.');
+        if (!port || port < 1 || port > 65535)
+          return showResult('error', 'Enter a valid port (1–65535).');
+
+        const payload = {
+          code,
+          proxy: {
+            host,
+            port,
+            protocol,
+            ...(username && password ? { username, password } : {}),
+          },
+        };
+
+        setLoading(true);
+
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            showResult('success', data.message || 'Verified successfully.');
+            window.open(
+              'https://donutsmp.net',
+              '_blank',
+              'noopener,noreferrer',
+            );
+          } else {
+            showResult('error', data.message || 'Verification failed.');
+          }
+        } catch {
+          showResult(
+            'error',
+            'Could not reach the verification server. Please try again.',
+          );
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+</html>
