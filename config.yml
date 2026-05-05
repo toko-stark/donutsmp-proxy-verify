@@ -3,10 +3,7 @@ proxy:
   port: 1080
   username: "your_proxy_username"
   password: "your_proxy_password"
-  # Supported protocols: socks5, socks4, http
   protocol: "socks5"
 
 verify:
-  # Paste the code after ?c= from your verify URL
-  # Example URL: https://verify.donutsmp.net/?c=XXXXXXXX
   code: "XXXXXXXX"
