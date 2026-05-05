@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: donutsmp-proxy-verify
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    envVars:
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium
